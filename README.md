@@ -1,74 +1,55 @@
 <div align="center">
 
-# <NAME>
-### <DESCRIPTION>
+# websocket-benchmark
+### Rust websocket benchmark.
 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Checks](https://github.com/hack-ink/<NAME>/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/hack-ink/<NAME>/actions/workflows/checks.yml)
-[![Release](https://github.com/hack-ink/<NAME>/actions/workflows/release.yml/badge.svg)](https://github.com/hack-ink/<NAME>/actions/workflows/release.yml)
-[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/hack-ink/<NAME>)](https://github.com/hack-ink/<NAME>/tags)
-[![GitHub last commit](https://img.shields.io/github/last-commit/hack-ink/<NAME>?color=red&style=plastic)](https://github.com/hack-ink/<NAME>)
+[![Checks](https://github.com/hack-ink/websocket-benchmark/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/hack-ink/websocket-benchmark/actions/workflows/checks.yml)
+[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/hack-ink/websocket-benchmark)](https://github.com/hack-ink/websocket-benchmark/tags)
+[![GitHub last commit](https://img.shields.io/github/last-commit/hack-ink/websocket-benchmark?color=red&style=plastic)](https://github.com/hack-ink/websocket-benchmark)
 </div>
 
 
-## Feature Highlights
-### TODO
-TODO
-
-## Status
-TODO
-
-
-## Usage
-### Installation
-#### Build from Source
+### Usage
 ```sh
-# Clone the repository.
-git clone https://github.com/hack-ink/<NAME>
-cd <NAME>
-
-# To install Rust on macOS and Unix, run the following command.
-#
-# To install Rust on Windows, download and run the installer from `https://rustup.rs`.
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain stable
-
-# Install the necessary dependencies. (Unix only)
-# Using Ubuntu as an example, this really depends on your distribution.
-sudo apt-get update
-sudo apt-get install <DEPENDENCIES>
-
-# Build the project, and the binary will be available at `target/release/<NAME>`.
-cargo build --release
-
-# If you are a macOS user and want to have a `<NAME>.app`, run the following command.
-# Install `cargo-bundle` to pack the binary into an app.
-cargo install cargo-bundle
-# Pack the app, and the it will be available at `target/release/bundle/osx/<NAME>.app`.
-cargo bundle --release
+cargo run --release
 ```
 
-#### Download Pre-built Binary
-- **macOS**
-  - Download the latest pre-built binary from [GitHub Releases](https://github.com/hack-ink/<NAME>/releases/latest).
-- **Windows**
-  - TODO
-- **Unix**
-  - TODO
+### Result
+- Apple Silicon M4 MAX 64GB
+  ```
+  Benchmarking soketto...
+  server: listening on 0.0.0.0:9001
+  server: new connection from 127.0.0.1:53127
+  server: WS handshake successful
+  client: WS connected
+  client: sent 100000 messages, average round trip time 30.31µs
+  server: received close signal
 
-### Configuration
-#### TODO
-TODO
+  Benchmarking tokio-tungstenite...
+  server: listening on 0.0.0.0:9001
+  server: new connection from 127.0.0.1:53150
+  server: WS handshake successful
+  client: WS connected
+  client: sent 100000 messages, average round trip time 19.99µs
+  server: received close signal
 
-### Interaction
-TODO
+  Benchmarking tokio-websockets...
+  server: listening on 0.0.0.0:9001
+  server: new connection from 127.0.0.1:53158
+  server: WS handshake successful
+  client: WS connected
+  client: sent 100000 messages, average round trip time 23.84µs
+  server: received close signal
 
-### Update
-TODO
-
-
-## Development
-### Architecture
-TODO
+  Benchmarking ws-tool...
+  server: listening on 0.0.0.0:9001
+  server: new connection from 127.0.0.1:53168
+  server: WS handshake successful
+  client: WS connected
+  client: sent 100000 messages, average round trip time 19.84µs
+  server: received close signal
+  ```
 
 
 ## Support Me
@@ -92,11 +73,7 @@ Thank you for your support!
 
 ## Appreciation
 We would like to extend our heartfelt gratitude to the following projects and contributors:
-- The Rust community for their continuous support and development of the Rust ecosystem.
-
-
-## Additional Acknowledgements
-- TODO
+- https://github.com/nurmohammed840/web-socket-benchmark
 
 
 <div align="right">
