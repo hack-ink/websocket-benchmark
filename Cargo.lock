@@ -1249,9 +1249,9 @@ dependencies = [
 
 [[package]]
 name = "ws-tool"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b91cf33d161a1f005f778613f50784128287ed9f572324eb93c91e8a03f25ac5"
+checksum = "b060449ad8701ef4e9ed481a6cf184d391b0aedf787cd57412c7ff82ed0b8287"
 dependencies = [
  "base64 0.20.0",
  "bytes",
