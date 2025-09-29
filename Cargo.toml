@@ -25,5 +25,5 @@ soketto           = { version = "0.8" }
 tokio             = { version = "1.45", features = ["macros", "rt-multi-thread", "sync"] }
 tokio-tungstenite = { version = "0.26" }
 tokio-util        = { version = "0.7", features = ["compat"] }
-tokio-websockets  = { version = "0.11", features = ["client", "fastrand", "server", "sha1_smol"] }
+tokio-websockets  = { version = "0.12", features = ["client", "fastrand", "server", "sha1_smol"] }
 ws-tool           = { version = "0.11", features = ["async"] }
