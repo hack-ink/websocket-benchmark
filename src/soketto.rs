@@ -1,8 +1,8 @@
 // crates.io
 use futures::io::{BufReader, BufWriter};
 use soketto::{
-	handshake::{server::Response, Client, Server},
 	Data, Incoming,
+	handshake::{Client, Server, server::Response},
 };
 use tokio::net::TcpStream;
 use tokio_util::compat::TokioAsyncReadCompatExt;
