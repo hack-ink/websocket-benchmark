@@ -1,7 +1,7 @@
 // crates.io
 use ws_tool::{
-	codec::{self, AsyncBytesCodec},
 	ClientBuilder, ServerBuilder,
+	codec::{self, AsyncBytesCodec},
 };
 // self
 use crate::prelude::*;
