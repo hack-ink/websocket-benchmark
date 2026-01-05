@@ -22,7 +22,7 @@ lto      = true
 color-eyre        = { version = "0.6" }
 futures           = { version = "0.3" }
 soketto           = { version = "0.8" }
-tokio             = { version = "1.48", features = ["macros", "rt-multi-thread", "sync"] }
+tokio             = { version = "1.49", features = ["macros", "rt-multi-thread", "sync"] }
 tokio-tungstenite = { version = "0.28" }
 tokio-util        = { version = "0.7", features = ["compat"] }
 tokio-websockets  = { version = "0.13", features = ["client", "fastrand", "server", "sha1_smol"] }
