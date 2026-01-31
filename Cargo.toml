@@ -15,14 +15,24 @@ inherits    = "dev"
 
 [profile.ci-release]
 inherits = "release"
-lto      = true
+lto = "fat"
+opt-level = 3
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
 
 [dependencies]
 # crates.io
+bytes             = { version = "1" }
 color-eyre        = { version = "0.6" }
+fastwebsockets    = { version = "0.10", features = ["upgrade"] }
 futures           = { version = "0.3" }
+http-body-util    = { version = "0.1" }
+hyper             = { version = "1", features = ["server", "client", "http1"] }
+hyper-util        = { version = "0.1", features = ["tokio", "server-auto"] }
 soketto           = { version = "0.8" }
-tokio             = { version = "1.48", features = ["macros", "rt-multi-thread", "sync"] }
+sockudo-ws        = { version = "1.7" }
+tokio             = { version = "1.49", features = ["macros", "rt-multi-thread", "sync"] }
 tokio-tungstenite = { version = "0.28" }
 tokio-util        = { version = "0.7", features = ["compat"] }
 tokio-websockets  = { version = "0.13", features = ["client", "fastrand", "server", "sha1_smol"] }

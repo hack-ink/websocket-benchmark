@@ -54,6 +54,54 @@ cargo run --release
     client: sent 100000 messages, average round trip time 19.84µs
     server: received close signal
     ```
+- Intel Xeon Gold 6230
+    ```
+    Benchmarking soketto...
+    server: listening on 0.0.0.0:9001
+    server: new connection from 127.0.0.1:55732
+    server: WS handshake successful
+    client: WS connected
+    client: sent 100000 messages, average round trip time 26.62µs
+    
+    Benchmarking tokio-tungstenite...
+    server: received close signal
+    server: listening on 0.0.0.0:9001
+    server: new connection from 127.0.0.1:37118
+    server: WS handshake successful
+    client: WS connected
+    client: sent 100000 messages, average round trip time 23.13µs
+    server: received close signal
+    
+    Benchmarking tokio-websockets...
+    server: listening on 0.0.0.0:9001
+    server: new connection from 127.0.0.1:37124
+    server: WS handshake successful
+    client: WS connected
+    client: sent 100000 messages, average round trip time 21.26µs
+    server: received close signal
+    
+    Benchmarking ws-tool...
+    server: listening on 0.0.0.0:9001
+    server: new connection from 127.0.0.1:37128
+    server: WS handshake successful
+    client: WS connected
+    client: sent 100000 messages, average round trip time 18.67µs
+    server: received close signal
+    
+    Benchmarking fastwebsockets...
+    server: listening on 0.0.0.0:9001
+    server: new connection from 127.0.0.1:37142
+    client: WS connected
+    client: sent 100000 messages, average round trip time 16.78µs
+    
+    Benchmarking sockudo-ws...
+    server: listening on 0.0.0.0:9001
+    server: new connection from 127.0.0.1:53220
+    server: WS handshake successful
+    client: WS connected
+    client: sent 100000 messages, average round trip time 19.31µs
+    server: received close signal
+    ```
 
 ## Support Me
 
