@@ -5,9 +5,10 @@
 ### Rust websocket benchmark.
 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Rust](https://github.com/hack-ink/websocket-benchmark/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/hack-ink/websocket-benchmark/actions/workflows/rust.yml)
+[![Language Checks](https://github.com/hack-ink/websocket-benchmark/actions/workflows/language.yml/badge.svg?branch=main)](https://github.com/hack-ink/websocket-benchmark/actions/workflows/language.yml)
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/hack-ink/websocket-benchmark)](https://github.com/hack-ink/websocket-benchmark/tags)
 [![GitHub last commit](https://img.shields.io/github/last-commit/hack-ink/websocket-benchmark?color=red&style=plastic)](https://github.com/hack-ink/websocket-benchmark)
+[![GitHub code lines](https://tokei.rs/b1/github/hack-ink/websocket-benchmark)](https://github.com/hack-ink/websocket-benchmark)
 
 </div>
 
