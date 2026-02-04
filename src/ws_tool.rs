@@ -43,10 +43,9 @@ pub(super) async fn run_client(
 	mode: Mode,
 	payload: &[u8],
 ) -> Result<()> {
-	let uri = format!("ws://{addr}")
-		.try_into()
-		.wrap_err("Failed to parse websocket URI.")?;
+	let uri = format!("ws://{addr}").try_into().wrap_err("Failed to parse websocket URI.")?;
 	let stream = TcpStream::connect(addr).await?;
+
 	set_nodelay(&stream)?;
 
 	let (mut rx, mut tx) = ClientBuilder::new()

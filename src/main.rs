@@ -9,10 +9,7 @@ mod tokio_websockets;
 mod ws_tool;
 
 mod prelude {
-pub use std::{
-		net::SocketAddr,
-		time::Instant,
-	};
+	pub use std::{net::SocketAddr, time::Instant};
 
 	pub use futures::prelude::*;
 	pub use tokio::net::{TcpListener, TcpStream};
@@ -45,12 +42,7 @@ enum Implementation {
 
 impl Implementation {
 	fn all() -> Vec<Self> {
-		vec![
-			Self::Soketto,
-			Self::TokioTungstenite,
-			Self::TokioWebsockets,
-			Self::WsTool,
-		]
+		vec![Self::Soketto, Self::TokioTungstenite, Self::TokioWebsockets, Self::WsTool]
 	}
 
 	fn as_str(self) -> &'static str {
@@ -167,18 +159,21 @@ async fn run_client(config: ClientConfig) -> Result<()> {
 
 	println!(
 		"Config: messages={}, payload={} bytes, warmup_rounds={}, rounds={}.",
-		config.bench.msg_count, config.bench.payload_len, config.bench.warmup_rounds, config.bench.rounds
+		config.bench.msg_count,
+		config.bench.payload_len,
+		config.bench.warmup_rounds,
+		config.bench.rounds
 	);
 
 	match config.implementation {
-		Implementation::Soketto => soketto::run_client(config.addr, &config.bench, config.mode, &payload).await,
-		Implementation::TokioTungstenite => {
-			tokio_tungstenite::run_client(config.addr, &config.bench, config.mode, &payload).await
-		},
-		Implementation::TokioWebsockets => {
-			tokio_websockets::run_client(config.addr, &config.bench, config.mode, &payload).await
-		},
-		Implementation::WsTool => ws_tool::run_client(config.addr, &config.bench, config.mode, &payload).await,
+		Implementation::Soketto =>
+			soketto::run_client(config.addr, &config.bench, config.mode, &payload).await,
+		Implementation::TokioTungstenite =>
+			tokio_tungstenite::run_client(config.addr, &config.bench, config.mode, &payload).await,
+		Implementation::TokioWebsockets =>
+			tokio_websockets::run_client(config.addr, &config.bench, config.mode, &payload).await,
+		Implementation::WsTool =>
+			ws_tool::run_client(config.addr, &config.bench, config.mode, &payload).await,
 	}
 }
 
@@ -230,15 +225,12 @@ fn spawn_client(
 }
 
 fn wait_for_ready(child: &mut Child) -> Result<u16> {
-	let stdout = child
-		.stdout
-		.take()
-		.ok_or_else(|| eyre!("Server stdout was not captured."))?;
+	let stdout = child.stdout.take().ok_or_else(|| eyre!("Server stdout was not captured."))?;
 	let (tx, rx) = mpsc::channel::<u16>();
 
 	std::thread::spawn(move || {
 		let reader = io::BufReader::new(stdout);
-		for line in reader.lines().flatten() {
+		for line in reader.lines().map_while(Result::ok) {
 			if let Some(port) = parse_ready_line(&line) {
 				let _ = tx.send(port);
 				break;
@@ -246,8 +238,7 @@ fn wait_for_ready(child: &mut Child) -> Result<u16> {
 		}
 	});
 
-	rx.recv_timeout(READY_TIMEOUT)
-		.map_err(|_| eyre!("Timed out waiting for server readiness."))
+	rx.recv_timeout(READY_TIMEOUT).map_err(|_| eyre!("Timed out waiting for server readiness."))
 }
 
 fn parse_ready_line(line: &str) -> Option<u16> {
@@ -269,9 +260,8 @@ fn parse_args(args: &[String]) -> Result<ConfigUnion> {
 		"server" => Ok(ConfigUnion::Server(parse_server_args(&mut args[1..].iter().cloned())?)),
 		"client" => Ok(ConfigUnion::Client(parse_client_args(&mut args[1..].iter().cloned())?)),
 		"driver" => Ok(ConfigUnion::Driver(parse_driver_args(&mut args[1..].iter().cloned())?)),
-		value if value.starts_with("--") => {
-			Ok(ConfigUnion::Driver(parse_driver_args(&mut args.iter().cloned())?))
-		},
+		value if value.starts_with("--") =>
+			Ok(ConfigUnion::Driver(parse_driver_args(&mut args.iter().cloned())?)),
 		value => Err(eyre!("Unknown role '{value}'. Use driver, server, or client.")),
 	}
 }
@@ -313,10 +303,7 @@ where
 
 	validate_bench_config(&bench)?;
 
-	Ok(DriverConfig {
-		impls: impls.unwrap_or_else(Implementation::all),
-		bench,
-	})
+	Ok(DriverConfig { impls: impls.unwrap_or_else(Implementation::all), bench })
 }
 
 fn parse_server_args<I>(iter: &mut I) -> Result<ServerConfig>
@@ -333,9 +320,7 @@ where
 				std::process::exit(0);
 			},
 			_ => {
-				return Err(eyre!(
-					"Unknown argument '{arg}'. Use --impl or --help."
-				));
+				return Err(eyre!("Unknown argument '{arg}'. Use --impl or --help."));
 			},
 		}
 	}
@@ -408,10 +393,7 @@ fn validate_bench_config(config: &BenchConfig) -> Result<()> {
 }
 
 fn parse_impl_list(value: &str) -> Result<Vec<Implementation>> {
-	value
-		.split(',')
-		.map(|item| Implementation::parse(item.trim()))
-		.collect()
+	value.split(',').map(|item| Implementation::parse(item.trim())).collect()
 }
 
 fn parse_mode(value: &str) -> Result<Mode> {
@@ -423,9 +405,7 @@ fn parse_mode(value: &str) -> Result<Mode> {
 }
 
 fn parse_addr(value: &str) -> Result<std::net::SocketAddr> {
-	value
-		.parse()
-		.wrap_err("Address must be in host:port format.")
+	value.parse().wrap_err("Address must be in host:port format.")
 }
 
 fn parse_u32(value: String) -> Result<u32> {
@@ -440,8 +420,7 @@ fn next_value<I>(iter: &mut I, flag: &str) -> Result<String>
 where
 	I: Iterator<Item = String>,
 {
-	iter.next()
-		.ok_or_else(|| eyre!("Missing value for {flag} flag."))
+	iter.next().ok_or_else(|| eyre!("Missing value for {flag} flag."))
 }
 
 fn print_usage() {
@@ -451,10 +430,5 @@ fn print_usage() {
 }
 
 pub(crate) fn set_nodelay(stream: &tokio::net::TcpStream) -> Result<()> {
-	stream
-		.set_nodelay(true)
-		.wrap_err("Failed to enable TCP_NODELAY.")
+	stream.set_nodelay(true).wrap_err("Failed to enable TCP_NODELAY.")
 }
-
-#[test]
-fn placeholder() {}

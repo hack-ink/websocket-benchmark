@@ -75,3 +75,42 @@ fn percentile(sorted: &[f64], p: f64) -> f64 {
 		sorted[lower] + (sorted[upper] - sorted[lower]) * weight
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn approx_eq(actual: f64, expected: f64, eps: f64) {
+		assert!((actual - expected).abs() <= eps, "Expected {expected}, got {actual}");
+	}
+
+	#[test]
+	fn stats_basic_distribution() {
+		let values = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+		let stats = compute_stats(&values);
+
+		approx_eq(stats.median, 3.0, 1e-9);
+		approx_eq(stats.p90, 4.6, 1e-9);
+		approx_eq(stats.p99, 4.96, 1e-9);
+		approx_eq(stats.mean, 3.0, 1e-9);
+		approx_eq(stats.stdev, 2.0_f64.sqrt(), 1e-9);
+	}
+
+	#[test]
+	fn stats_single_value() {
+		let values = vec![42.0];
+		let stats = compute_stats(&values);
+
+		approx_eq(stats.median, 42.0, 1e-9);
+		approx_eq(stats.p90, 42.0, 1e-9);
+		approx_eq(stats.p99, 42.0, 1e-9);
+		approx_eq(stats.mean, 42.0, 1e-9);
+		approx_eq(stats.stdev, 0.0, 1e-9);
+	}
+
+	#[test]
+	fn duration_to_micros_converts_seconds() {
+		let duration = Duration::from_secs_f64(1.5);
+		approx_eq(duration_to_micros(duration), 1_500_000.0, 1e-6);
+	}
+}

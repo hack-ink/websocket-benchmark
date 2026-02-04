@@ -51,7 +51,8 @@ pub(super) async fn run_client(
 	set_nodelay(&stream)?;
 
 	let host = addr.to_string();
-	let mut ws_stream = Client::new(BufReader::new(BufWriter::new(stream.compat())), host.as_str(), "/");
+	let mut ws_stream =
+		Client::new(BufReader::new(BufWriter::new(stream.compat())), host.as_str(), "/");
 	ws_stream.handshake().await?;
 
 	let (mut tx, mut rx) = ws_stream.into_builder().finish();
@@ -87,7 +88,8 @@ where
 			msg.clear();
 			match rx.receive(&mut msg).await? {
 				Incoming::Data(Data::Binary(_)) => {},
-				Incoming::Closed(_) => return Err(eyre!("Server closed the connection during RTT.")),
+				Incoming::Closed(_) =>
+					return Err(eyre!("Server closed the connection during RTT.")),
 				_ => return Err(eyre!("Unexpected message type received during RTT.")),
 			}
 		}
@@ -129,7 +131,8 @@ where
 				msg.clear();
 				match rx.receive(&mut msg).await? {
 					Incoming::Data(Data::Binary(_)) => {},
-					Incoming::Closed(_) => return Err(eyre!("Server closed the connection during throughput.")),
+					Incoming::Closed(_) =>
+						return Err(eyre!("Server closed the connection during throughput.")),
 					_ => return Err(eyre!("Unexpected message type received during throughput.")),
 				}
 			}
