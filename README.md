@@ -42,18 +42,50 @@ Values will vary by hardware and settings.
     Benchmarking soketto.
     Phase: RTT.
     Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
-    RTT result (us): median=30.31, p90=31.10, p99=32.44, mean=30.62, stdev=0.52.
+    RTT result (us): median=33.86, p90=33.95, p99=33.99, mean=33.66, stdev=0.36.
     Phase: Throughput.
     Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
-    Throughput result (MiB/s, tx+rx): median=750.12, p90=760.88, p99=772.54, mean=752.30, stdev=8.10.
+    Throughput result (MiB/s, tx+rx): median=973.49, p90=996.31, p99=1000.86, mean=980.12, stdev=13.04.
 
     Benchmarking tokio-tungstenite.
     Phase: RTT.
     Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
-    RTT result (us): median=19.99, p90=20.45, p99=21.03, mean=20.12, stdev=0.31.
+    RTT result (us): median=28.23, p90=29.28, p99=29.61, mean=27.70, stdev=1.67.
     Phase: Throughput.
     Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
-    Throughput result (MiB/s, tx+rx): median=820.14, p90=832.02, p99=845.91, mean=823.55, stdev=9.44.
+    Throughput result (MiB/s, tx+rx): median=2224.08, p90=2443.26, p99=2496.92, mean=2281.33, stdev=134.83.
+
+    Benchmarking tokio-websockets.
+    Phase: RTT.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    RTT result (us): median=24.81, p90=25.35, p99=25.48, mean=24.97, stdev=0.31.
+    Phase: Throughput.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    Throughput result (MiB/s, tx+rx): median=2453.13, p90=2531.10, p99=2552.74, mean=2400.84, stdev=156.63.
+
+    Benchmarking ws-tool.
+    Phase: RTT.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    RTT result (us): median=24.94, p90=25.73, p99=26.15, mean=25.05, stdev=0.61.
+    Phase: Throughput.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    Throughput result (MiB/s, tx+rx): median=3506.21, p90=3575.85, p99=3606.07, mean=3204.69, stdev=477.82.
+
+    Benchmarking fastwebsockets.
+    Phase: RTT.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    RTT result (us): median=26.46, p90=26.55, p99=26.58, mean=25.95, stdev=0.98.
+    Phase: Throughput.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    Throughput result (MiB/s, tx+rx): median=2606.39, p90=2639.46, p99=2639.57, mean=2596.05, stdev=42.31.
+
+    Benchmarking sockudo-ws.
+    Phase: RTT.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    RTT result (us): median=27.88, p90=28.23, p99=28.32, mean=27.96, stdev=0.22.
+    Phase: Throughput.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    Throughput result (MiB/s, tx+rx): median=2274.14, p90=2461.63, p99=2529.10, mean=2310.82, stdev=134.29.
     ```
 
 ## Support Me
