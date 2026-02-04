@@ -20,7 +20,12 @@ lto      = true
 [dependencies]
 # crates.io
 color-eyre        = { version = "0.6" }
+fastwebsockets    = { version = "0.10", features = ["unstable-split", "upgrade"] }
 futures           = { version = "0.3" }
+http-body-util    = { version = "0.1" }
+hyper             = { version = "1", features = ["client", "http1", "server"] }
+hyper-util        = { version = "0.1", features = ["server-auto", "tokio"] }
+sockudo-ws        = { version = "1.7" }
 soketto           = { version = "0.8" }
 tokio             = { version = "1.48", features = ["macros", "rt-multi-thread", "sync"] }
 tokio-tungstenite = { version = "0.28" }

@@ -3,6 +3,8 @@
 #![deny(clippy::all, missing_docs, unused_crate_dependencies)]
 
 mod bench;
+mod fastwebsockets;
+mod sockudo_ws;
 mod soketto;
 mod tokio_tungstenite;
 mod tokio_websockets;
@@ -34,6 +36,8 @@ const READY_TIMEOUT: Duration = Duration::from_secs(5);
 
 #[derive(Clone, Copy, Debug)]
 enum Implementation {
+	Fastwebsockets,
+	SockudoWs,
 	Soketto,
 	TokioTungstenite,
 	TokioWebsockets,
@@ -42,11 +46,20 @@ enum Implementation {
 
 impl Implementation {
 	fn all() -> Vec<Self> {
-		vec![Self::Soketto, Self::TokioTungstenite, Self::TokioWebsockets, Self::WsTool]
+		vec![
+			Self::Soketto,
+			Self::TokioTungstenite,
+			Self::TokioWebsockets,
+			Self::WsTool,
+			Self::Fastwebsockets,
+			Self::SockudoWs,
+		]
 	}
 
 	fn as_str(self) -> &'static str {
 		match self {
+			Self::Fastwebsockets => "fastwebsockets",
+			Self::SockudoWs => "sockudo-ws",
 			Self::Soketto => "soketto",
 			Self::TokioTungstenite => "tokio-tungstenite",
 			Self::TokioWebsockets => "tokio-websockets",
@@ -56,12 +69,14 @@ impl Implementation {
 
 	fn parse(value: &str) -> Result<Self> {
 		match value {
+			"fastwebsockets" => Ok(Self::Fastwebsockets),
+			"sockudo-ws" => Ok(Self::SockudoWs),
 			"soketto" => Ok(Self::Soketto),
 			"tokio-tungstenite" => Ok(Self::TokioTungstenite),
 			"tokio-websockets" => Ok(Self::TokioWebsockets),
 			"ws-tool" => Ok(Self::WsTool),
 			_ => Err(eyre!(
-				"Unknown implementation '{value}'. Use soketto, tokio-tungstenite, tokio-websockets, or ws-tool."
+				"Unknown implementation '{value}'. Use fastwebsockets, sockudo-ws, soketto, tokio-tungstenite, tokio-websockets, or ws-tool."
 			)),
 		}
 	}
@@ -147,6 +162,8 @@ async fn run_server(config: ServerConfig) -> Result<()> {
 	io::stdout().flush().wrap_err("Failed to flush readiness output.")?;
 
 	match config.implementation {
+		Implementation::Fastwebsockets => fastwebsockets::run_server(listener).await,
+		Implementation::SockudoWs => sockudo_ws::run_server(listener).await,
 		Implementation::Soketto => soketto::run_server(listener).await,
 		Implementation::TokioTungstenite => tokio_tungstenite::run_server(listener).await,
 		Implementation::TokioWebsockets => tokio_websockets::run_server(listener).await,
@@ -166,6 +183,10 @@ async fn run_client(config: ClientConfig) -> Result<()> {
 	);
 
 	match config.implementation {
+		Implementation::Fastwebsockets =>
+			fastwebsockets::run_client(config.addr, &config.bench, config.mode, &payload).await,
+		Implementation::SockudoWs =>
+			sockudo_ws::run_client(config.addr, &config.bench, config.mode, &payload).await,
 		Implementation::Soketto =>
 			soketto::run_client(config.addr, &config.bench, config.mode, &payload).await,
 		Implementation::TokioTungstenite =>
@@ -425,7 +446,7 @@ where
 
 fn print_usage() {
 	println!(
-		"Usage:\n  websocket-benchmark [driver] [--impl <list>] [--messages <n>] [--payload <bytes>] [--warmup <n>] [--rounds <n>]\n  websocket-benchmark server --impl <name>\n  websocket-benchmark client --impl <name> --mode <rtt|throughput> --addr <host:port> [--messages <n>] [--payload <bytes>] [--warmup <n>] [--rounds <n>]\n\nExamples:\n  websocket-benchmark\n  websocket-benchmark --impl soketto,tokio-tungstenite\n  websocket-benchmark client --impl soketto --mode rtt --addr 127.0.0.1:9001"
+		"Usage:\n  websocket-benchmark [driver] [--impl <list>] [--messages <n>] [--payload <bytes>] [--warmup <n>] [--rounds <n>]\n  websocket-benchmark server --impl <name>\n  websocket-benchmark client --impl <name> --mode <rtt|throughput> --addr <host:port> [--messages <n>] [--payload <bytes>] [--warmup <n>] [--rounds <n>]\n\nExamples:\n  websocket-benchmark\n  websocket-benchmark --impl fastwebsockets,sockudo-ws,soketto\n  websocket-benchmark client --impl soketto --mode rtt --addr 127.0.0.1:9001"
 	);
 }
 

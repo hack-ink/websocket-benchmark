@@ -20,8 +20,10 @@ cargo run --release
 Optional flags:
 
 ```sh
-cargo run --release -- --impl soketto,tokio-tungstenite --messages 100000 --payload 4096 --warmup 1 --rounds 5
+cargo run --release -- --impl fastwebsockets,sockudo-ws,soketto --messages 100000 --payload 4096 --warmup 1 --rounds 5
 ```
+
+Supported implementations: fastwebsockets, sockudo-ws, soketto, tokio-tungstenite, tokio-websockets, ws-tool.
 
 Advanced roles:
 
