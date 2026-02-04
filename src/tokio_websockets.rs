@@ -1,77 +1,126 @@
 // crates.io
 use tokio_websockets::{ClientBuilder, Message, ServerBuilder};
 // self
-use crate::prelude::*;
+use crate::{
+	bench::{BenchConfig, Mode, duration_to_micros, report_latency, report_throughput},
+	prelude::*,
+	set_nodelay,
+};
 
-pub(super) async fn bench() {
-	let (server_ready_tx, server_ready_rx) = oneshot::channel::<()>();
-	let server_handle = tokio::spawn(async move {
-		let listener = TcpListener::bind(ADDR).await.unwrap();
+use color_eyre::eyre::{Result, eyre};
 
-		println!("server: listening on {ADDR}");
+pub(super) async fn run_server(listener: TcpListener) -> Result<()> {
+	let (stream, _addr) = listener.accept().await?;
+	set_nodelay(&stream)?;
 
-		server_ready_tx.send(()).unwrap();
+	let (_, mut ws_stream) = ServerBuilder::new().accept(stream).await?;
 
-		let (stream, addr) = listener.accept().await.unwrap();
+	while let Some(maybe_msg) = ws_stream.next().await {
+		let msg = maybe_msg?;
 
-		println!("server: new connection from {addr}");
+		if msg.is_close() {
+			break;
+		} else {
+			ws_stream.send(msg).await?;
+		}
+	}
 
-		// Spawn a new task to handle the connection.
-		tokio::spawn(async move {
-			let (_, mut ws_stream) = ServerBuilder::new().accept(stream).await.unwrap();
+	Ok(())
+}
 
-			println!("server: WS handshake successful");
+pub(super) async fn run_client(
+	addr: SocketAddr,
+	config: &BenchConfig,
+	mode: Mode,
+	payload: &[u8],
+) -> Result<()> {
+	let stream = TcpStream::connect(addr).await?;
+	set_nodelay(&stream)?;
 
-			// Echo loop.
-			while let Some(maybe_msg) = ws_stream.next().await {
-				let msg = maybe_msg.unwrap();
+	let url = format!("ws://{addr}");
+	let (ws_stream, _) = ClientBuilder::new().uri(&url)?.connect_on(stream).await?;
 
+	match mode {
+		Mode::Rtt => run_rtt(ws_stream, config, payload).await?,
+		Mode::Throughput => run_throughput(ws_stream, config, payload).await?,
+	}
+
+	Ok(())
+}
+
+async fn run_rtt(
+	mut ws_stream: tokio_websockets::WebSocketStream<TcpStream>,
+	config: &BenchConfig,
+	payload: &[u8],
+) -> Result<()> {
+	let mut samples = Vec::with_capacity(config.rounds as usize);
+
+	for round in 0..(config.warmup_rounds + config.rounds) {
+		let start = Instant::now();
+		for _ in 0..config.msg_count {
+			ws_stream.send(Message::binary(payload.to_vec())).await?;
+			let msg = ws_stream
+				.next()
+				.await
+				.ok_or_else(|| eyre!("Server closed the connection during RTT."))??;
+			if msg.is_close() {
+				return Err(eyre!("Server closed the connection during RTT."));
+			}
+		}
+		let elapsed = start.elapsed();
+		if round >= config.warmup_rounds {
+			let micros = duration_to_micros(elapsed) / config.msg_count as f64;
+			samples.push(micros);
+		}
+	}
+
+	report_latency(&samples);
+	ws_stream.close().await?;
+	Ok(())
+}
+
+async fn run_throughput(
+	ws_stream: tokio_websockets::WebSocketStream<TcpStream>,
+	config: &BenchConfig,
+	payload: &[u8],
+) -> Result<()> {
+	let mut samples = Vec::with_capacity(config.rounds as usize);
+	let (mut sink, mut stream) = ws_stream.split();
+
+	for round in 0..(config.warmup_rounds + config.rounds) {
+		let start = Instant::now();
+		let send = async {
+			for _ in 0..config.msg_count {
+				sink.send(Message::binary(payload.to_vec())).await?;
+			}
+			Ok::<(), color_eyre::Report>(())
+		};
+		let recv = async {
+			for _ in 0..config.msg_count {
+				let msg = stream
+					.next()
+					.await
+					.ok_or_else(|| eyre!("Server closed the connection during throughput."))??;
 				if msg.is_close() {
-					println!("server: received close signal");
-
-					break;
-				} else {
-					// Echo the message back.
-					if let Err(e) = ws_stream.send(msg).await {
-						eprintln!("server: failed to echo msg, error: {e}");
-
-						break;
-					}
+					return Err(eyre!("Server closed the connection during throughput."));
 				}
 			}
-		});
-	});
+			Ok::<(), color_eyre::Report>(())
+		};
 
-	server_ready_rx.await.unwrap();
+		let (send_result, recv_result) = tokio::join!(send, recv);
+		send_result?;
+		recv_result?;
 
-	let client_handle = tokio::spawn(async move {
-		let (mut ws_stream, _) =
-			ClientBuilder::new().uri(&format!("ws://{ADDR}")).unwrap().connect().await.unwrap();
-
-		println!("client: WS connected");
-
-		let mut duration = Duration::default();
-
-		for _i in 0..MSG_COUNT {
-			let start = Instant::now();
-
-			ws_stream.send(Message::binary(PAYLOAD)).await.unwrap();
-
-			let _msg = ws_stream.next().await.unwrap().unwrap();
-			let elapsed = start.elapsed();
-
-			duration += elapsed;
-
-			// println!("client: round trip #{_i} took {elapsed:.2?}");
+		let elapsed = start.elapsed();
+		if round >= config.warmup_rounds {
+			let bytes = config.msg_count as f64 * config.payload_len as f64 * 2.0;
+			let mib_per_sec = bytes / (1024.0 * 1024.0) / elapsed.as_secs_f64();
+			samples.push(mib_per_sec);
 		}
+	}
 
-		let duration_avg = duration / MSG_COUNT;
-
-		println!("client: sent {MSG_COUNT} messages, average round trip time {duration_avg:.2?}");
-
-		ws_stream.close().await.unwrap();
-	});
-
-	client_handle.await.unwrap();
-	server_handle.await.unwrap();
+	report_throughput(&samples);
+	sink.send(Message::close(None, "")).await?;
+	Ok(())
 }

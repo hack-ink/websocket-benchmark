@@ -4,87 +4,136 @@ use ws_tool::{
 	codec::{self, AsyncBytesCodec},
 };
 // self
-use crate::prelude::*;
+use crate::{
+	bench::{BenchConfig, Mode, duration_to_micros, report_latency, report_throughput},
+	prelude::*,
+	set_nodelay,
+};
 
-pub(super) async fn bench() {
-	let (server_ready_tx, server_ready_rx) = oneshot::channel::<()>();
-	let server_handle = tokio::spawn(async move {
-		let listener = TcpListener::bind(ADDR).await.unwrap();
+use color_eyre::eyre::{Result, WrapErr, eyre};
 
-		println!("server: listening on {ADDR}");
+pub(super) async fn run_server(listener: TcpListener) -> Result<()> {
+	let (stream, _addr) = listener.accept().await?;
+	set_nodelay(&stream)?;
 
-		server_ready_tx.send(()).unwrap();
+	let (mut rx, mut tx) = ServerBuilder::async_accept(
+		stream,
+		codec::default_handshake_handler,
+		AsyncBytesCodec::factory,
+	)
+	.await?
+	.split();
 
-		let (stream, addr) = listener.accept().await.unwrap();
+	loop {
+		let msg = rx.receive().await?;
 
-		println!("server: new connection from {addr}");
+		if msg.code.is_close() {
+			break;
+		} else {
+			tx.send(msg).await?;
+		}
+	}
 
-		// Spawn a new task to handle the connection.
-		tokio::spawn(async move {
-			let (mut rx, mut tx) = ServerBuilder::async_accept(
-				stream,
-				codec::default_handshake_handler,
-				AsyncBytesCodec::factory,
-			)
-			.await
-			.unwrap()
-			.split();
+	Ok(())
+}
 
-			println!("server: WS handshake successful");
+pub(super) async fn run_client(
+	addr: SocketAddr,
+	config: &BenchConfig,
+	mode: Mode,
+	payload: &[u8],
+) -> Result<()> {
+	let uri = format!("ws://{addr}")
+		.try_into()
+		.wrap_err("Failed to parse websocket URI.")?;
+	let stream = TcpStream::connect(addr).await?;
+	set_nodelay(&stream)?;
 
-			// Echo loop.
-			loop {
-				let msg = rx.receive().await.unwrap();
+	let (mut rx, mut tx) = ClientBuilder::new()
+		.async_with_stream(uri, stream, AsyncBytesCodec::check_fn)
+		.await?
+		.split();
 
+	match mode {
+		Mode::Rtt => run_rtt(&mut rx, &mut tx, config, payload).await?,
+		Mode::Throughput => run_throughput(&mut rx, &mut tx, config, payload).await?,
+	}
+
+	tx.send((ws_tool::frame::OpCode::Close, &[])).await?;
+	Ok(())
+}
+
+async fn run_rtt<R, W>(
+	rx: &mut ws_tool::codec::AsyncBytesRecv<R>,
+	tx: &mut ws_tool::codec::AsyncBytesSend<W>,
+	config: &BenchConfig,
+	payload: &[u8],
+) -> Result<()>
+where
+	R: tokio::io::AsyncRead + Unpin,
+	W: tokio::io::AsyncWrite + Unpin,
+{
+	let mut samples = Vec::with_capacity(config.rounds as usize);
+
+	for round in 0..(config.warmup_rounds + config.rounds) {
+		let start = Instant::now();
+		for _ in 0..config.msg_count {
+			tx.send(payload).await?;
+			let _msg = rx.receive().await?;
+		}
+		let elapsed = start.elapsed();
+		if round >= config.warmup_rounds {
+			let micros = duration_to_micros(elapsed) / config.msg_count as f64;
+			samples.push(micros);
+		}
+	}
+
+	report_latency(&samples);
+	Ok(())
+}
+
+async fn run_throughput<R, W>(
+	rx: &mut ws_tool::codec::AsyncBytesRecv<R>,
+	tx: &mut ws_tool::codec::AsyncBytesSend<W>,
+	config: &BenchConfig,
+	payload: &[u8],
+) -> Result<()>
+where
+	R: tokio::io::AsyncRead + Unpin,
+	W: tokio::io::AsyncWrite + Unpin,
+{
+	let mut samples = Vec::with_capacity(config.rounds as usize);
+
+	for round in 0..(config.warmup_rounds + config.rounds) {
+		let start = Instant::now();
+		let send = async {
+			for _ in 0..config.msg_count {
+				tx.send(payload).await?;
+			}
+			Ok::<(), color_eyre::Report>(())
+		};
+		let recv = async {
+			for _ in 0..config.msg_count {
+				let msg = rx.receive().await?;
 				if msg.code.is_close() {
-					println!("server: received close signal");
-
-					break;
-				} else {
-					// Echo the message back.
-					if let Err(e) = tx.send(msg).await {
-						eprintln!("server: failed to echo msg, error: {e}");
-
-						break;
-					}
+					return Err(eyre!("Server closed the connection during throughput."));
 				}
 			}
-		});
-	});
+			Ok::<(), color_eyre::Report>(())
+		};
 
-	server_ready_rx.await.unwrap();
+		let (send_result, recv_result) = tokio::join!(send, recv);
+		send_result?;
+		recv_result?;
 
-	let client_handle = tokio::spawn(async move {
-		let (mut rx, mut tx) = ClientBuilder::new()
-			.async_connect(format!("ws://{ADDR}").try_into().unwrap(), AsyncBytesCodec::check_fn)
-			.await
-			.unwrap()
-			.split();
-
-		println!("client: WS connected");
-
-		let mut duration = Duration::default();
-
-		for _i in 0..MSG_COUNT {
-			let start = Instant::now();
-
-			tx.send(PAYLOAD).await.unwrap();
-
-			let _msg = rx.receive().await.unwrap();
-			let elapsed = start.elapsed();
-
-			duration += elapsed;
-
-			// println!("client: round trip #{_i} took {elapsed:.2?}");
+		let elapsed = start.elapsed();
+		if round >= config.warmup_rounds {
+			let bytes = config.msg_count as f64 * config.payload_len as f64 * 2.0;
+			let mib_per_sec = bytes / (1024.0 * 1024.0) / elapsed.as_secs_f64();
+			samples.push(mib_per_sec);
 		}
+	}
 
-		let duration_avg = duration / MSG_COUNT;
-
-		println!("client: sent {MSG_COUNT} messages, average round trip time {duration_avg:.2?}");
-
-		tx.send((ws_tool::frame::OpCode::Close, &[])).await.unwrap();
-	});
-
-	client_handle.await.unwrap();
-	server_handle.await.unwrap();
+	report_throughput(&samples);
+	Ok(())
 }

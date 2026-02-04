@@ -17,42 +17,41 @@
 cargo run --release
 ```
 
-### Result
+Optional flags:
+
+```sh
+cargo run --release -- --impl soketto,tokio-tungstenite --messages 100000 --payload 4096 --warmup 1 --rounds 5
+```
+
+Advanced roles:
+
+```sh
+websocket-benchmark server --impl soketto
+websocket-benchmark client --impl soketto --mode rtt --addr 127.0.0.1:9001
+```
+
+### Example Output
+
+Values will vary by hardware and settings.
 
 - Apple Silicon M4 MAX 64GB
 
     ```
-    Benchmarking soketto...
-    server: listening on 0.0.0.0:9001
-    server: new connection from 127.0.0.1:53127
-    server: WS handshake successful
-    client: WS connected
-    client: sent 100000 messages, average round trip time 30.31µs
-    server: received close signal
+    Benchmarking soketto.
+    Phase: RTT.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    RTT result (us): median=30.31, p90=31.10, p99=32.44, mean=30.62, stdev=0.52.
+    Phase: Throughput.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    Throughput result (MiB/s, tx+rx): median=750.12, p90=760.88, p99=772.54, mean=752.30, stdev=8.10.
 
-    Benchmarking tokio-tungstenite...
-    server: listening on 0.0.0.0:9001
-    server: new connection from 127.0.0.1:53150
-    server: WS handshake successful
-    client: WS connected
-    client: sent 100000 messages, average round trip time 19.99µs
-    server: received close signal
-
-    Benchmarking tokio-websockets...
-    server: listening on 0.0.0.0:9001
-    server: new connection from 127.0.0.1:53158
-    server: WS handshake successful
-    client: WS connected
-    client: sent 100000 messages, average round trip time 23.84µs
-    server: received close signal
-
-    Benchmarking ws-tool...
-    server: listening on 0.0.0.0:9001
-    server: new connection from 127.0.0.1:53168
-    server: WS handshake successful
-    client: WS connected
-    client: sent 100000 messages, average round trip time 19.84µs
-    server: received close signal
+    Benchmarking tokio-tungstenite.
+    Phase: RTT.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    RTT result (us): median=19.99, p90=20.45, p99=21.03, mean=20.12, stdev=0.31.
+    Phase: Throughput.
+    Config: messages=100000, payload=4096 bytes, warmup_rounds=1, rounds=5.
+    Throughput result (MiB/s, tx+rx): median=820.14, p90=832.02, p99=845.91, mean=823.55, stdev=9.44.
     ```
 
 ## Support Me
