@@ -11,6 +11,12 @@ Purpose: Provide the canonical entry point and reading order for repository docu
 
 ## Documentation classes
 
+### Specifications (reserved)
+
+- Location: `docs/spec/`.
+- Use for: System contracts, data models, and required invariants.
+- Status: Reserved directory structure. Add specs here when needed.
+
 ### Operational guides
 
 - Location: `docs/guide/`.
